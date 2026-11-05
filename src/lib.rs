@@ -225,17 +225,17 @@ pub const BUTTON_SPACING: i32 = 7;
 
 const BYTES_DARK_MIN: &[u8] = include_bytes!("../assets/minimize.png");
 const BYTES_DARK_MAX: &[u8] = include_bytes!("../assets/maximize.png");
-const BYTES_CLOSE: &[u8] = include_bytes!("../assets/close.png");
+const BYTES_CLOSE: &[u8] = include_bytes!("../assets/close@2.png");
 const BYTES_LIGHT_MIN: &[u8] = include_bytes!("../assets/minimize-light.png");
 const BYTES_LIGHT_MAX: &[u8] = include_bytes!("../assets/maximize-light.png");
 
 pub const URI_LIGHT_MINIMIZE: &str = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAGUlEQVR4nGNgoDlg1NXV/Y9PARPt3UAQAAD5CQGKX4x+JQAAAABJRU5ErkJggg==";
 pub const URI_LIGHT_MAXIMIZE: &str = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAIklEQVR4nGPU1dX9z4AP4FOgq6v7nwmvbgYGhsGggJGQNwFNDwYlwRys/gAAAABJRU5ErkJggg==";
-pub const URI_LIGHT_CLOSE: &str = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAL0lEQVR4nGP8////fwYGBgZGRkZGBiQAE2diIAb8hwJsfEZkQWRNMCupYAXFvgAARF8z4pzKG98AAAAASUVORK5CYII=";
+pub const URI_LIGHT_CLOSE: &str = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAhUlEQVQ4ja3TwQrCMBAE0FXE+mfSg38qxL+zXnwejFBsaxbiQiDJzkw2k03giCsuiOQ444ZToHjHhDFBHisWykftXjcejUoW2M1EhoxoAlq5zCk/q2uZNH3NFyZnnN4kI/axHs+IMFvvIuKwivz3FbpM7HrGrkbqbuXuzzRUkQx5LlIwvADtNyiquuDm/AAAAABJRU5ErkJggg==";
 
 pub const URI_DARK_MINIMIZE: &str = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAGUlEQVR4nGNgoDlg/P///398Cpho7waCAACKSQQAWqekTgAAAABJRU5ErkJggg==";
 pub const URI_DARK_MAXIMIZE: &str = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAI0lEQVR4nGP8////fwZ8AJ+C/////2fCq5uBgWEwKGAk5E0AQLoP/WAufmsAAAAASUVORK5CYII=";
-pub const URI_DARK_CLOSE: &str = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAL0lEQVR4nGP8////fwYGBgZGRkZGBiQAE2diIAb8hwJsfEZkQWRNMCupYAXFvgAARF8z4pzKG98AAAAASUVORK5CYII=";
+pub const URI_DARK_CLOSE: &str = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAhUlEQVQ4ja3TwQrCMBAE0FXE+mfSg38qxL+zXnwejFBsaxbiQiDJzkw2k03giCsuiOQ444ZToHjHhDFBHisWykftXjcejUoW2M1EhoxoAlq5zCk/q2uZNH3NFyZnnN4kI/axHs+IMFvvIuKwivz3FbpM7HrGrkbqbuXuzzRUkQx5LlIwvADtNyiquuDm/AAAAABJRU5ErkJggg==";
 
 /// Opciones de configuración para la HeaderBar nativa de Canaima.
 #[derive(Debug, Clone)]
