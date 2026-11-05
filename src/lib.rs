@@ -830,10 +830,19 @@ pub fn setup_gtk_headerbar<R: tauri::Runtime>(window: &tauri::WebviewWindow<R>, 
                     background-color: #f2f2f2;
                     border-bottom: 1px solid rgba(0, 0, 0, 0.12);
                     padding: 0 8px;
+                    transition: background-color 0.2s ease;
                 }
                 #canaima-headerbar.is-dark {
                     background-color: #242424;
                     border-bottom: 1px solid #1a1a1a;
+                }
+                #canaima-headerbar:backdrop {
+                    background-color: #f6f6f6;
+                    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+                }
+                #canaima-headerbar.is-dark:backdrop {
+                    background-color: #202020;
+                    border-bottom: 1px solid #181818;
                 }
                 #canaima-title {
                     font-size: 13px;
@@ -841,9 +850,21 @@ pub fn setup_gtk_headerbar<R: tauri::Runtime>(window: &tauri::WebviewWindow<R>, 
                     color: #2b2b2b;
                     opacity: 0.95;
                     font-family: system-ui, -apple-system, sans-serif;
+                    transition: opacity 0.2s ease;
                 }
                 #canaima-headerbar.is-dark #canaima-title {
                     color: #ffffff;
+                }
+                #canaima-headerbar:backdrop #canaima-title,
+                #canaima-title:backdrop {
+                    opacity: 0.55;
+                }
+                #canaima-logo {
+                    transition: opacity 0.2s ease;
+                }
+                #canaima-headerbar:backdrop #canaima-logo,
+                #canaima-logo:backdrop {
+                    opacity: 0.55;
                 }
                 #canaima-buttons-box {
                     margin-right: 0px;
@@ -858,7 +879,16 @@ pub fn setup_gtk_headerbar<R: tauri::Runtime>(window: &tauri::WebviewWindow<R>, 
                     border: none;
                     background-image: none;
                     box-shadow: none;
-                    transition: background-color 0.15s ease;
+                    opacity: 1.0;
+                    transition: background-color 0.15s ease, opacity 0.2s ease;
+                }
+
+                /* Opacamiento cuando la ventana está inactiva / por debajo de otra (:backdrop) */
+                #canaima-headerbar:backdrop button.titlebutton,
+                #canaima-headerbar:backdrop button.control-btn,
+                #canaima-headerbar button.titlebutton:backdrop,
+                #canaima-headerbar button.control-btn:backdrop {
+                    opacity: 0.55;
                 }
 
                 /* Botones Modo Claro */
@@ -912,7 +942,7 @@ pub fn setup_gtk_headerbar<R: tauri::Runtime>(window: &tauri::WebviewWindow<R>, 
                 }
                 #canaima-headerbar.is-dark button.titlebutton.minimize:backdrop,
                 #canaima-headerbar.is-dark button.control-btn.btn-minimize:backdrop {
-                    background-color: #4c4c4c;
+                    background-color: #303030;
                 }
 
                 #canaima-headerbar.is-dark button.titlebutton.maximize,
@@ -925,7 +955,7 @@ pub fn setup_gtk_headerbar<R: tauri::Runtime>(window: &tauri::WebviewWindow<R>, 
                 }
                 #canaima-headerbar.is-dark button.titlebutton.maximize:backdrop,
                 #canaima-headerbar.is-dark button.control-btn.btn-maximize:backdrop {
-                    background-color: #4c4c4c;
+                    background-color: #303030;
                 }
 
                 #canaima-headerbar.is-dark button.titlebutton.close,
