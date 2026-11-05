@@ -25,11 +25,16 @@ Sustituye por completo las barras de título genéricas del sistema operativo po
 ## ✨ Características Principales
 
 - ⛰️ **Isotipo Vectorial Oficial Canaima**: Logo Tepuy en formato SVG embebido directamente en el binario; calibrado a **71 × 12 px** y recoloreado dinámicamente según el tema activo sin pérdida de nitidez.
-- 🔴🟡🔵 **Controles de Ventana Calibrados**:
-  - Botones circulares con diámetro exacto de **20 × 20 px**.
+- 🔴🟡🔵 **Controles de Ventana Calibrados Milimétricamente**:
+  - Botones circulares con diámetro exacto de **20 × 20 px** y margen exterior derecho de **12 px**.
   - Separación uniforme de **7 px** entre controles.
-  - Iconos oficiales de **8 × 8 px** renderizados con `PixbufLoader` nativo para máxima nitidez en pantallas estándar y HiDPI.
-  - Paleta institucional: Botón de cierre en azul Canaima (`#0B6793` y `:hover` `#0889c7`), minimizar y maximizar en gris neutro (`#d6d6d6` claro, `#303030` oscuro).
+  - Iconos institucionales de **8 × 8 px** renderizados con `PixbufLoader` nativo para máxima nitidez en pantallas estándar y HiDPI:
+    - **Cerrar ($\times$)**: Cruz delgada estilizada de 1 px de trazo con antialiasing simétrico 8-way sobre fondo azul Canaima (`#0B6793` y `:hover` `#0889c7`).
+    - **Maximizar ($\square$)**: Marco cuadrado fino de 1 px, esquinas suavizadas y centro hueco.
+    - **Minimizar (—)**: Barra horizontal nítida de 1 px alineada en la línea base de los controles.
+- 🪟 **Soporte Nativo de Segundo Plano (`:backdrop`)**:
+  - Cuando la ventana pasa a segundo plano o se sitúa por debajo de otra, los botones de control, el título y el isotipo se atenúan automáticamente al **55% de opacidad** (`opacity: 0.55`).
+  - Transición fluida con `transition: opacity 0.2s ease` para otorgar la jerarquía visual nativa del sistema operativo sin saltos abruptos.
 - 🌓 **Detección Automática y Sincronización de Tema**:
   - Detecta automáticamente el tema del escritorio en el arranque mediante `detect_system_dark_theme()`.
   - Expone el comando Tauri `sync_theme` para conmutar la barra instantáneamente cuando el usuario cambie el tema en la interfaz web (Vue, React, Svelte, Tailwind).
@@ -332,6 +337,17 @@ setup_gtk_headerbar(&window, &config);
 
 ---
 
+## 🪟 Comportamiento de Ventana Inactiva (`:backdrop`)
+
+Cuando el usuario hace clic fuera de la aplicación o abre otra ventana por encima, GTK activa de forma nativa la pseudo-clase CSS `:backdrop`.
+
+`canaima-titlebar` gestiona este estado automáticamente:
+- **Atenuación institucional:** Los tres botones de control (`btn-minimize`, `btn-maximize`, `btn-close`), el título central (`#canaima-title`) y el isotipo (`#canaima-logo`) reducen su opacidad al **55%** (`opacity: 0.55`).
+- **Tono azul desaturado:** El botón de cierre `#0B6793` adquiere el tono atenuado característico de Canaima (`rgba(11, 103, 147, 0.55)`), permitiendo al usuario identificar instantáneamente cuál ventana posee el foco del teclado y mouse.
+- **Transición suave:** La propiedad `transition: opacity 0.2s ease` garantiza una alternancia visual limpia y profesional.
+
+---
+
 ## 🎨 Selectores CSS para Estilos Personalizados
 
 Todos los componentes de la barra exponen selectores semánticos que puedes manipular con la opción `custom_css`:
@@ -340,12 +356,15 @@ Todos los componentes de la barra exponen selectores semánticos que puedes mani
 | :--- | :--- | :--- |
 | `#canaima-headerbar` | `GtkHeaderBar` | Contenedor principal de la barra de título. |
 | `#canaima-headerbar.is-dark` | `GtkHeaderBar` | Estilo activo cuando la barra está en modo oscuro. |
+| `#canaima-headerbar:backdrop` | `GtkHeaderBar` | Estilo cuando la ventana está en segundo plano / inactiva. |
 | `#canaima-title` | `GtkLabel` | Etiqueta con el texto del título central. |
+| `#canaima-title:backdrop` | `GtkLabel` | Título atenuado cuando la ventana pierde el foco. |
 | `#canaima-logo` | `GtkImage` | Imagen que contiene el SVG oficial del Tepuy Canaima. |
 | `#canaima-buttons-box` | `GtkBox` | Contenedor horizontal que agrupa los botones de control. |
 | `.btn-minimize` | `GtkButton` | Botón circular de minimizar ventana. |
 | `.btn-maximize` | `GtkButton` | Botón circular de maximizar / restaurar ventana. |
 | `.btn-close` | `GtkButton` | Botón circular de cerrar ventana (`#0B6793`). |
+| `.control-btn:backdrop` | `GtkButton` | Botones de control opacados en estado desenfocado. |
 | `.solid-csd` | `GtkWindow` | Clase aplicada automáticamente en escritorios X11 sin compositor. |
 
 ---
