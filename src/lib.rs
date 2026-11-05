@@ -495,12 +495,32 @@ pub fn setup_gtk_headerbar<R: tauri::Runtime>(window: &tauri::WebviewWindow<R>, 
             event_box.show_all();
             gtk_window.set_titlebar(Some(&event_box));
 
-            // Estilos CSS
+            // Si la pantalla no tiene compositor activo (típico en LXDE, LXQt o XFCE/MATE sin composición),
+            // marcamos la ventana como solid-csd para evitar sombras negras o bordes rotos en X11/Openbox.
+            if let Some(screen) = gtk::gdk::Screen::default() {
+                if !screen.is_composited() {
+                    gtk_window.style_context().add_class("solid-csd");
+                }
+            }
+
+            // Estilos CSS compatibles con todos los entornos de escritorio
             let css_data = format!("
-                window, window decoration, window.csd, window.csd decoration {{
+                /* Entornos compositados (GNOME, Cinnamon, KDE Plasma, XFCE/MATE con compositor) */
+                window.csd decoration {{
                     border: 0px solid transparent;
                     outline: 0px solid transparent;
                     box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.3);
+                }}
+
+                /* Entornos sin compositor (LXDE, LXQt con Openbox, XFCE/MATE sin composición) */
+                window.solid-csd decoration,
+                window.solid-csd,
+                window:not(.csd) decoration,
+                .solid-csd decoration {{
+                    border: 1px solid #7c7c7c;
+                    outline: 0px solid transparent;
+                    box-shadow: none;
+                    margin: 0;
                 }}
                 
                 #canaima-headerbar {{
