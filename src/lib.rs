@@ -276,6 +276,126 @@ impl Default for TitlebarConfig {
     }
 }
 
+impl TitlebarConfig {
+    /// Crea una nueva configuración con todos los valores por defecto oficiales de Canaima.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Personaliza el título de la ventana.
+    pub fn with_title(mut self, title: impl Into<String>) -> Self {
+        self.title = Some(title.into());
+        self
+    }
+
+    /// Activa o desactiva la visualización del logotipo oficial de Canaima.
+    pub fn with_logo(mut self, show: bool) -> Self {
+        self.show_logo = show;
+        self
+    }
+
+    /// Oculta el logotipo de Canaima.
+    pub fn without_logo(mut self) -> Self {
+        self.show_logo = false;
+        self
+    }
+
+    /// Activa o desactiva el botón de minimizar.
+    pub fn with_minimize(mut self, show: bool) -> Self {
+        self.show_minimize = show;
+        self
+    }
+
+    /// Oculta el botón de minimizar.
+    pub fn without_minimize(mut self) -> Self {
+        self.show_minimize = false;
+        self
+    }
+
+    /// Activa o desactiva el botón de maximizar.
+    pub fn with_maximize(mut self, show: bool) -> Self {
+        self.show_maximize = show;
+        self
+    }
+
+    /// Oculta el botón de maximizar (ideal para ventanas de diálogo o tamaño fijo).
+    pub fn without_maximize(mut self) -> Self {
+        self.show_maximize = false;
+        self
+    }
+
+    /// Activa o desactiva el botón de cerrar.
+    pub fn with_close(mut self, show: bool) -> Self {
+        self.show_close = show;
+        self
+    }
+
+    /// Oculta el botón de cerrar.
+    pub fn without_close(mut self) -> Self {
+        self.show_close = false;
+        self
+    }
+
+    /// Fuerza el inicio en modo oscuro (`true`) o claro (`false`).
+    pub fn with_dark_mode(mut self, dark: bool) -> Self {
+        self.initial_dark_mode = dark;
+        self
+    }
+
+    /// Activa o desactiva la autodetección del tema oscuro del sistema.
+    pub fn with_auto_detect_theme(mut self, auto: bool) -> Self {
+        self.auto_detect_theme = auto;
+        self
+    }
+
+    /// Añade estilos CSS adicionales o sobreescrituras a la HeaderBar.
+    pub fn with_custom_css(mut self, css: impl Into<String>) -> Self {
+        self.custom_css = Some(css.into());
+        self
+    }
+
+    /// Desactiva la barra de título personalizada.
+    pub fn disabled(mut self) -> Self {
+        self.enabled = false;
+        self
+    }
+}
+
+/// Rasgo para aceptar configuraciones parciales, builders, tuplas vacías o cadenas de título.
+pub trait IntoTitlebarConfig {
+    fn into_titlebar_config(self) -> TitlebarConfig;
+}
+
+impl IntoTitlebarConfig for TitlebarConfig {
+    fn into_titlebar_config(self) -> TitlebarConfig {
+        self
+    }
+}
+
+impl IntoTitlebarConfig for &TitlebarConfig {
+    fn into_titlebar_config(self) -> TitlebarConfig {
+        self.clone()
+    }
+}
+
+impl IntoTitlebarConfig for () {
+    fn into_titlebar_config(self) -> TitlebarConfig {
+        TitlebarConfig::default()
+    }
+}
+
+impl IntoTitlebarConfig for &str {
+    fn into_titlebar_config(self) -> TitlebarConfig {
+        TitlebarConfig::new().with_title(self)
+    }
+}
+
+impl IntoTitlebarConfig for String {
+    fn into_titlebar_config(self) -> TitlebarConfig {
+        TitlebarConfig::new().with_title(self)
+    }
+}
+
 #[cfg(target_os = "linux")]
 fn load_png_pixbuf(bytes: &[u8]) -> Option<gtk::gdk_pixbuf::Pixbuf> {
     use gtk::gdk_pixbuf::prelude::*;
@@ -406,9 +526,99 @@ pub mod commands {
 
 pub use commands::sync_theme;
 
-/// Configura la barra de título con las opciones por defecto.
+/// Configura la barra de título con cualquier configuración que implemente `IntoTitlebarConfig`.
+///
+/// Permite al desarrollador modificar únicamente las opciones deseadas sin tener que especificar
+/// todos los campos de la estructura. Por ejemplo:
+/// ```rust,ignore
+/// // Solo cambiar el título:
+/// canaima_titlebar::setup(&window, "Mi Aplicación");
+///
+/// // Solo desactivar el botón de maximizar:
+/// canaima_titlebar::setup(&window, canaima_titlebar::TitlebarConfig::new().without_maximize());
+///
+/// // Valores por defecto:
+/// canaima_titlebar::setup(&window, ());
+/// ```
+pub fn setup<R: tauri::Runtime>(window: &tauri::WebviewWindow<R>, config: impl IntoTitlebarConfig) {
+    let cfg = config.into_titlebar_config();
+    setup_gtk_headerbar(window, &cfg);
+}
+
+/// Configura la barra de título con las opciones por defecto oficiales de Canaima GNU/Linux.
 pub fn setup_default<R: tauri::Runtime>(window: &tauri::WebviewWindow<R>) {
-    setup_gtk_headerbar(window, &TitlebarConfig::default());
+    setup(window, ());
+}
+
+/// Configura la barra de título cambiando únicamente el título de la ventana.
+pub fn setup_with_title<R: tauri::Runtime>(window: &tauri::WebviewWindow<R>, title: impl Into<String>) {
+    setup(window, TitlebarConfig::new().with_title(title));
+}
+
+/// Configura la barra de título desactivando únicamente el botón de maximizar
+/// (ideal para ventanas de tamaño fijo, diálogos o configuraciones).
+pub fn setup_without_maximize<R: tauri::Runtime>(window: &tauri::WebviewWindow<R>) {
+    setup(window, TitlebarConfig::new().without_maximize());
+}
+
+/// Configura la barra de título desactivando únicamente el botón de minimizar.
+pub fn setup_without_minimize<R: tauri::Runtime>(window: &tauri::WebviewWindow<R>) {
+    setup(window, TitlebarConfig::new().without_minimize());
+}
+
+/// Configura la barra de título ocultando el logotipo de Canaima.
+pub fn setup_without_logo<R: tauri::Runtime>(window: &tauri::WebviewWindow<R>) {
+    setup(window, TitlebarConfig::new().without_logo());
+}
+
+/// Configura la barra de título especificando el modo oscuro o claro inicial.
+pub fn setup_with_dark_mode<R: tauri::Runtime>(window: &tauri::WebviewWindow<R>, dark: bool) {
+    setup(window, TitlebarConfig::new().with_dark_mode(dark));
+}
+
+/// Inicializa el plugin oficial de Tauri v2 para `canaima-titlebar` con opciones por defecto.
+///
+/// Inyecta automáticamente la barra de título oficial en la ventana principal (`"main"`)
+/// y registra el comando IPC `sync_theme`.
+///
+/// # Ejemplo
+/// ```rust,ignore
+/// tauri::Builder::default()
+///     .plugin(canaima_titlebar::init());
+/// ```
+pub fn init<R: tauri::Runtime>() -> tauri::plugin::TauriPlugin<R> {
+    init_with_config(TitlebarConfig::default())
+}
+
+/// Inicializa el plugin oficial de Tauri v2 con una configuración personalizada.
+///
+/// # Ejemplo
+/// ```rust,ignore
+/// // Desactivar maximizar en la ventana principal:
+/// tauri::Builder::default()
+///     .plugin(canaima_titlebar::init_with_config(
+///         canaima_titlebar::TitlebarConfig::new().without_maximize()
+///     ));
+///
+/// // O simplemente pasar un título personalizado:
+/// tauri::Builder::default()
+///     .plugin(canaima_titlebar::init_with_config("Centro de Software"));
+/// ```
+pub fn init_with_config<R: tauri::Runtime>(config: impl IntoTitlebarConfig) -> tauri::plugin::TauriPlugin<R> {
+    let cfg = config.into_titlebar_config();
+    tauri::plugin::Builder::new("canaima-titlebar")
+        .invoke_handler(tauri::generate_handler![commands::sync_theme])
+        .setup(move |app, _api| {
+            #[cfg(target_os = "linux")]
+            {
+                use tauri::Manager;
+                if let Some(window) = app.get_webview_window("main") {
+                    setup_gtk_headerbar(&window, &cfg);
+                }
+            }
+            Ok(())
+        })
+        .build()
 }
 
 #[cfg(target_os = "linux")]
@@ -793,5 +1003,50 @@ mod tests {
         assert_eq!(LOGO_HEIGHT, 12);
         assert_eq!(BUTTON_SIZE, 20);
         assert_eq!(BUTTON_SPACING, 7);
+    }
+
+    #[test]
+    fn test_titlebar_config_builder() {
+        // Solo cambiar el título
+        let cfg = TitlebarConfig::new().with_title("Mi App");
+        assert_eq!(cfg.title.as_deref(), Some("Mi App"));
+        assert!(cfg.show_maximize);
+        assert!(cfg.show_minimize);
+        assert!(cfg.show_logo);
+
+        // Solo desactivar maximizar
+        let cfg2 = TitlebarConfig::new().without_maximize();
+        assert!(!cfg2.show_maximize);
+        assert!(cfg2.show_minimize);
+        assert!(cfg2.show_close);
+        assert!(cfg2.show_logo);
+
+        // Solo ocultar logo y activar modo oscuro
+        let cfg3 = TitlebarConfig::new().without_logo().with_dark_mode(true);
+        assert!(!cfg3.show_logo);
+        assert!(cfg3.initial_dark_mode);
+        assert!(cfg3.show_maximize);
+    }
+
+    #[test]
+    fn test_into_titlebar_config() {
+        // Desde ()
+        let cfg: TitlebarConfig = ().into_titlebar_config();
+        assert!(cfg.show_maximize);
+        assert!(cfg.title.is_none());
+
+        // Desde &str
+        let cfg_str: TitlebarConfig = "Hola Canaima".into_titlebar_config();
+        assert_eq!(cfg_str.title.as_deref(), Some("Hola Canaima"));
+        assert!(cfg_str.show_maximize);
+
+        // Desde String
+        let cfg_string: TitlebarConfig = String::from("Ventana").into_titlebar_config();
+        assert_eq!(cfg_string.title.as_deref(), Some("Ventana"));
+
+        // Desde TitlebarConfig directo
+        let custom = TitlebarConfig::new().without_maximize();
+        let cfg_direct = custom.into_titlebar_config();
+        assert!(!cfg_direct.show_maximize);
     }
 }

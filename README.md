@@ -232,33 +232,102 @@ export function aplicarTema(esOscuro: boolean) {
 
 ---
 
-## 🛠️ Opciones Avanzadas: `TitlebarConfig`
+## 🛠️ Personalización Flexible: Solo las opciones que necesitas
 
-Si requieres personalizar el comportamiento (cambiar el título mostrado, ocultar ciertos botones o inyectar estilos CSS adicionales), utiliza `setup_gtk_headerbar` pasando una estructura `TitlebarConfig`:
+A partir de la versión `0.1.1`, **ya no es necesario especificar todas las variables ni campos de la estructura**. Puedes modificar únicamente la opción deseada utilizando el patrón *Builder* o las funciones de conveniencia directa.
+
+### 🌟 Opción A: Modo Plugin Tauri (Recomendado - 1 sola línea)
+
+Configura la ventana principal (`"main"`) y registra el comando `sync_theme` automáticamente sin escribir código en `setup()`:
+
+```rust
+// Opciones por defecto oficiales
+tauri::Builder::default()
+    .plugin(canaima_titlebar::init())
+```
+
+O si solo deseas cambiar una opción (por ejemplo, desactivar el botón maximizar en una ventana fija o diálogo):
+
+```rust
+use canaima_titlebar::TitlebarConfig;
+
+tauri::Builder::default()
+    .plugin(canaima_titlebar::init_with_config(
+        TitlebarConfig::new().without_maximize()
+    ))
+```
+
+---
+
+### 🌟 Opción B: Mediante `setup` con Builder Fluent
+
+La función `canaima_titlebar::setup(&window, ...)` acepta cualquier configuración gracias al trait `IntoTitlebarConfig`. Puedes pasar:
+
+```rust
+use canaima_titlebar::{setup, TitlebarConfig};
+
+// 1. Solo cambiar el título (resto por defecto):
+setup(&window, "Centro de Software Canaima");
+
+// 2. Solo desactivar el botón de maximizar (ideal para ventanas de diálogo):
+setup(&window, TitlebarConfig::new().without_maximize());
+
+// 3. Solo ocultar el logotipo del Tepuy:
+setup(&window, TitlebarConfig::new().without_logo());
+
+// 4. Encadenar múltiples opciones deseadas:
+setup(&window, TitlebarConfig::new()
+    .with_title("Configuración")
+    .without_maximize()
+    .with_dark_mode(true)
+);
+
+// 5. Opciones por defecto:
+setup(&window, ());
+```
+
+---
+
+### 🌟 Opción C: Funciones Rápidas Directas
+
+Si solo quieres realizar una acción común en una sola llamada:
+
+```rust
+// Solo cambiar el título:
+canaima_titlebar::setup_with_title(&window, "Mi Aplicación");
+
+// Solo desactivar maximizar (frecuente en utilitarios o diálogos):
+canaima_titlebar::setup_without_maximize(&window);
+
+// Solo desactivar minimizar:
+canaima_titlebar::setup_without_minimize(&window);
+
+// Solo ocultar el logo Canaima:
+canaima_titlebar::setup_without_logo(&window);
+
+// Forzar modo oscuro inicial:
+canaima_titlebar::setup_with_dark_mode(&window, true);
+```
+
+---
+
+### 🌟 Opción D: Modificación de campos clásicos (Compatible hacia atrás)
+
+Si prefieres la estructura completa clásica o necesitas inyectar CSS avanzado personalizado:
 
 ```rust
 use canaima_titlebar::{setup_gtk_headerbar, TitlebarConfig};
 
-if let Some(window) = app.get_webview_window("main") {
-    let config = TitlebarConfig {
-        enabled: true,
-        // Título explícito (si es None, usa el título de la ventana)
-        title: Some("Centro de Control Canaima".to_string()),
-        show_logo: true,           // Mostrar isotipo Tepuy
-        show_minimize: true,       // Botón minimizar
-        show_maximize: true,       // Botón maximizar / restaurar
-        show_close: true,          // Botón cerrar
-        initial_dark_mode: false,  // Tema inicial si no hay autodefinición
-        auto_detect_theme: true,   // Consultar el tema GTK del sistema
-        custom_css: Some("
-            #canaima-headerbar {
-                background-color: #202020;
-            }
-        ".to_string()),
-    };
+let config = TitlebarConfig {
+    custom_css: Some("
+        #canaima-headerbar {
+            background-color: #202020;
+        }
+    ".to_string()),
+    ..TitlebarConfig::default() // Completa automáticamente el resto de valores
+};
 
-    setup_gtk_headerbar(&window, &config);
-}
+setup_gtk_headerbar(&window, &config);
 ```
 
 ---
