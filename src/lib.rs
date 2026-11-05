@@ -220,6 +220,8 @@ const CANAIMA_LOGO_SVG: &str = r###"<?xml version="1.0" encoding="UTF-8" standal
 
 pub const LOGO_WIDTH: i32 = 71;
 pub const LOGO_HEIGHT: i32 = 12;
+pub const BUTTON_SIZE: i32 = 20;
+pub const BUTTON_SPACING: i32 = 7;
 
 const BYTES_DARK_MIN: &[u8] = include_bytes!("../assets/minimize.png");
 const BYTES_DARK_MAX: &[u8] = include_bytes!("../assets/maximize.png");
@@ -227,13 +229,13 @@ const BYTES_CLOSE: &[u8] = include_bytes!("../assets/close.png");
 const BYTES_LIGHT_MIN: &[u8] = include_bytes!("../assets/minimize-light.png");
 const BYTES_LIGHT_MAX: &[u8] = include_bytes!("../assets/maximize-light.png");
 
-pub const URI_LIGHT_MINIMIZE: &str = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA8AAAAPCAYAAAA71pVKAAAAJ0lEQVR42mNgGAWjYHgCRgYGhv0MDAxsZOj9xcjAwPCfXJuZKHE2AHycAsNvxOlDAAAAAElFTkSuQmCC";
-pub const URI_LIGHT_MAXIMIZE: &str = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAElBMVEUAAAAAAAD///////////////8gZyBHAAAAAXRSTlMAQObYZgAAABpJREFUeNpjFGSAACYGGICKCMJFaMdgxLAdACNFAGFDN1apAAAAAElFTkSuQmCC";
-pub const URI_LIGHT_CLOSE: &str = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAhUlEQVQ4ja3TwQrCMBAE0FXE+mfSg38qxL+zXnwejFBsaxbiQiDJzkw2k03giCsuiOQ444ZToHjHhDFBHisWykftXjcejUoW2M1EhoxoAlq5zCk/q2uZNH3NFyZnnN4kI/axHs+IMFvvIuKwivz3FbpM7HrGrkbqbuXuzzRUkQx5LlIwvADtNyiquuDm/AAAAABJRU5ErkJggg==";
+pub const URI_LIGHT_MINIMIZE: &str = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAGUlEQVR4nGNgoDlg1NXV/Y9PARPt3UAQAAD5CQGKX4x+JQAAAABJRU5ErkJggg==";
+pub const URI_LIGHT_MAXIMIZE: &str = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAIklEQVR4nGPU1dX9z4AP4FOgq6v7nwmvbgYGhsGggJGQNwFNDwYlwRys/gAAAABJRU5ErkJggg==";
+pub const URI_LIGHT_CLOSE: &str = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAL0lEQVR4nGP8////fwYGBgZGRkZGBiQAE2diIAb8hwJsfEZkQWRNMCupYAXFvgAARF8z4pzKG98AAAAASUVORK5CYII=";
 
-pub const URI_DARK_MINIMIZE: &str = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA8AAAAPCAYAAAA71pVKAAAALUlEQVQokWP8//8/A7mAiWydo5pHNdNcMwsDA8N+BgYGNjL0/mL8T0HOoMjZAMEbCNeD6yZ4AAAAAElFTkSuQmCC";
-pub const URI_DARK_MAXIMIZE: &str = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAgMAAABinRfyAAAADFBMVEX////////////////1pQ5zAAAAA3RSTlMAvO1svbuvAAAAHElEQVQIHWP4DwQMT0NDoxkuMDCwk0uADQAZBQB7PRXhRXZmHgAAAABJRU5ErkJggg==";
-pub const URI_DARK_CLOSE: &str = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAhUlEQVQ4ja3TwQrCMBAE0FXE+mfSg38qxL+zXnwejFBsaxbiQiDJzkw2k03giCsuiOQ444ZToHjHhDFBHisWykftXjcejUoW2M1EhoxoAlq5zCk/q2uZNH3NFyZnnN4kI/axHs+IMFvvIuKwivz3FbpM7HrGrkbqbuXuzzRUkQx5LlIwvADtNyiquuDm/AAAAABJRU5ErkJggg==";
+pub const URI_DARK_MINIMIZE: &str = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAGUlEQVR4nGNgoDlg/P///398Cpho7waCAACKSQQAWqekTgAAAABJRU5ErkJggg==";
+pub const URI_DARK_MAXIMIZE: &str = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAI0lEQVR4nGP8////fwZ8AJ+C/////2fCq5uBgWEwKGAk5E0AQLoP/WAufmsAAAAASUVORK5CYII=";
+pub const URI_DARK_CLOSE: &str = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAL0lEQVR4nGP8////fwYGBgZGRkZGBiQAE2diIAb8hwJsfEZkQWRNMCupYAXFvgAARF8z4pzKG98AAAAASUVORK5CYII=";
 
 /// Opciones de configuración para la HeaderBar nativa de Canaima.
 #[derive(Debug, Clone)]
@@ -462,14 +464,15 @@ pub fn setup_gtk_headerbar<R: tauri::Runtime>(window: &tauri::WebviewWindow<R>, 
             }
 
             // Botones de control de ventana (Derecha)
-            let box_buttons = gtk::Box::new(gtk::Orientation::Horizontal, 6);
+            let box_buttons = gtk::Box::new(gtk::Orientation::Horizontal, BUTTON_SPACING);
             box_buttons.style_context().add_class("control-buttons-box");
             box_buttons.set_widget_name("canaima-buttons-box");
-            box_buttons.set_margin_end(6);
+            box_buttons.set_margin_end(12);
 
             if cfg.show_minimize {
                 let btn_minimize = gtk::Button::new();
                 btn_minimize.set_valign(gtk::Align::Center);
+                btn_minimize.set_size_request(BUTTON_SIZE, BUTTON_SIZE);
                 btn_minimize.style_context().add_class("titlebutton");
                 btn_minimize.style_context().add_class("minimize");
                 btn_minimize.style_context().add_class("control-btn");
@@ -496,6 +499,7 @@ pub fn setup_gtk_headerbar<R: tauri::Runtime>(window: &tauri::WebviewWindow<R>, 
             if cfg.show_maximize {
                 let btn_maximize = gtk::Button::new();
                 btn_maximize.set_valign(gtk::Align::Center);
+                btn_maximize.set_size_request(BUTTON_SIZE, BUTTON_SIZE);
                 btn_maximize.style_context().add_class("titlebutton");
                 btn_maximize.style_context().add_class("maximize");
                 btn_maximize.style_context().add_class("control-btn");
@@ -528,6 +532,7 @@ pub fn setup_gtk_headerbar<R: tauri::Runtime>(window: &tauri::WebviewWindow<R>, 
             if cfg.show_close {
                 let btn_close = gtk::Button::new();
                 btn_close.set_valign(gtk::Align::Center);
+                btn_close.set_size_request(BUTTON_SIZE, BUTTON_SIZE);
                 btn_close.style_context().add_class("titlebutton");
                 btn_close.style_context().add_class("close");
                 btn_close.style_context().add_class("control-btn");
@@ -631,15 +636,15 @@ pub fn setup_gtk_headerbar<R: tauri::Runtime>(window: &tauri::WebviewWindow<R>, 
                     color: #ffffff;
                 }
                 #canaima-buttons-box {
-                    margin-right: 2px;
+                    margin-right: 0px;
                 }
                 #canaima-headerbar button.titlebutton,
                 #canaima-headerbar button.control-btn {
                     border-radius: 9999px;
-                    min-width: 22px;
-                    min-height: 22px;
-                    padding: 2.5px;
-                    margin: 0 2px;
+                    min-width: 20px;
+                    min-height: 20px;
+                    padding: 0;
+                    margin: 0;
                     border: none;
                     background-image: none;
                     box-shadow: none;
@@ -786,5 +791,7 @@ mod tests {
         assert!(!BYTES_LIGHT_MAX.is_empty());
         assert_eq!(LOGO_WIDTH, 71);
         assert_eq!(LOGO_HEIGHT, 12);
+        assert_eq!(BUTTON_SIZE, 20);
+        assert_eq!(BUTTON_SPACING, 7);
     }
 }

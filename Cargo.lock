@@ -184,7 +184,7 @@ dependencies = [
 
 [[package]]
 name = "canaima-titlebar"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "gdk-pixbuf",
  "glib",
