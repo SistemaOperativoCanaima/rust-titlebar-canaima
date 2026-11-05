@@ -8,7 +8,7 @@
 [![License: GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue.svg?style=for-the-badge)](LICENSE)
 [![Tauri v2](https://img.shields.io/badge/Tauri-v2.x-24C8DB?style=for-the-badge&logo=tauri&logoColor=white)](https://tauri.app/)
 
-**Barra de título nativa GTK HeaderBar con estética e identidad visual de Canaima GNU/Linux para aplicaciones Tauri v2.**
+**Barra de título nativa GTK HeaderBar con identidad visual oficial de Canaima GNU/Linux para aplicaciones Tauri v2.**
 
 </div>
 
@@ -16,94 +16,225 @@
 
 ## 📖 Descripción General
 
-**`canaima-titlebar`** proporciona una cabecera de ventana nativa (`GtkHeaderBar`) adaptada para aplicaciones desarrolladas con **Tauri 2** en Canaima GNU/Linux y otras distribuciones basadas en Debian.
+**`canaima-titlebar`** proporciona una cabecera de ventana nativa (`GtkHeaderBar`) adaptada para aplicaciones desarrolladas con **Tauri 2** en Canaima GNU/Linux y sistemas basados en Debian.
 
-Integra la identidad visual oficial del sistema operativo Canaima, incluyendo el isotipo vectorial del **Tepuy**, controles de ventana circulares y soporte completo para cambio en caliente entre tema claro y tema oscuro desde el frontend (Vue 3, React, Svelte o JavaScript puro).
+Sustituye por completo las barras de título genéricas del sistema operativo por la **identidad visual oficial de Canaima**, incorporando el isotipo vectorial del **Tepuy**, controles de ventana circulares con la paleta de colores institucional, arrastre interactivo nativo y sincronización en tiempo real con el modo claro/oscuro del frontend.
 
 ---
 
 ## ✨ Características Principales
 
-- ⛰️ **Isotipo Oficial Canaima Vectorial**: Incorpora el logo Tepuy en formato SVG embebido en el binario; se adapta y recolorea dinámicamente al alternar entre modo oscuro y claro sin pérdida de nitidez.
-- 🔴🟡🔵 **Botones de Control Estilizados**: Botones circulares con la paleta de color oficial de Canaima (azul `#0B6793`, gris `#d6d6d6` y `#303030`), estados `:hover` y `:backdrop`.
-- 🔀 **Cero Archivos Externos**: Todos los iconos y gráficos están codificados directamente en Data URIs Base64 y SVG embebido. Tu aplicación no dependerá de carpetas externas de `assets/` ni fallará al ejecutarse desde `/usr/bin` o lanzadores `.desktop`.
-- 🌗 **Sincronización Dinámica de Tema**: Expone el comando Tauri `sync_theme` para conmutar la barra entre tema claro y oscuro en tiempo real cuando el usuario cambie el tema en la interfaz web.
-- 🖐️ **Interacción de Ventana Fluida**:
+- ⛰️ **Isotipo Vectorial Oficial Canaima**: Logo Tepuy en formato SVG embebido directamente en el binario; calibrado a **71 × 12 px** y recoloreado dinámicamente según el tema activo sin pérdida de nitidez.
+- 🔴🟡🔵 **Controles de Ventana Calibrados**:
+  - Botones circulares con diámetro exacto de **20 × 20 px**.
+  - Separación uniforme de **7 px** entre controles.
+  - Iconos oficiales de **8 × 8 px** renderizados con `PixbufLoader` nativo para máxima nitidez en pantallas estándar y HiDPI.
+  - Paleta institucional: Botón de cierre en azul Canaima (`#0B6793` y `:hover` `#0889c7`), minimizar y maximizar en gris neutro (`#d6d6d6` claro, `#303030` oscuro).
+- 🌓 **Detección Automática y Sincronización de Tema**:
+  - Detecta automáticamente el tema del escritorio en el arranque mediante `detect_system_dark_theme()`.
+  - Expone el comando Tauri `sync_theme` para conmutar la barra instantáneamente cuando el usuario cambie el tema en la interfaz web (Vue, React, Svelte, Tailwind).
+- 🛡️ **Protección Anti-Bordes Negros en X11**:
+  - Detecta si el servidor de visualización carece de compositor activo (`!screen.is_composited()`, común en **LXDE**, **LXQt** con Openbox o **XFCE/MATE** sin composición).
+  - Aplica automáticamente la clase `.solid-csd` con bordes sólidos y sin sombras transparentes RGBA, eliminando por completo los rectángulos negros alrededor de la ventana.
+- 🖐️ **Comportamiento Nativo Completo**:
   - Arrastre interactivo de ventana mediante `begin_move_drag`.
-  - Doble clic en la barra para maximizar y restaurar.
-- 🛡️ **Protección Anti-Marcos Negros en X11**: Detecta automáticamente si el servidor gráfico no tiene compositor activo (`!screen.is_composited()`, típico en **LXDE**, **LXQt** con Openbox o **XFCE/MATE** sin composición) y aplica reglas `.solid-csd` sin sombras transparentes para evitar rectángulos negros alrededor de la ventana.
-- 🧹 **Gestión de Memoria y Rendimiento**: Carga única de estilos en el `GdkScreen` mediante `std::sync::Once` evitando fugas de memoria o proveedores CSS redundantes.
+  - Doble clic en la barra para alternar entre maximizar y restaurar.
+- 🧹 **Cero Archivos Externos y Carga Única**:
+  - Todos los activos (SVG e imágenes) están compilados dentro del binario. Tu aplicación no depende de carpetas externas de `assets/` ni fallará al empaquetarse en `.deb`.
+  - Inyección global de estilos CSS en `GdkScreen` gestionada con `std::sync::Once` para evitar duplicación y fugas de memoria.
 
 ---
 
-## 🖥️ Compatibilidad de Entornos de Escritorio
+## 🖥️ Matriz de Compatibilidad por Entorno de Escritorio
 
 | Entorno | Gestor de Ventanas | Decoraciones | Soporte |
 | :--- | :--- | :--- | :---: |
-| **GNOME** | Mutter | CSD nativo con sombra RGBA | ✅ 100% |
+| **GNOME** | Mutter | CSD nativo con sombra RGBA suave | ✅ 100% |
 | **KDE Plasma** | KWin | CSD nativo con integración KWin | ✅ 100% |
-| **XFCE** | Xfwm4 | CSD / `_GTK_FRAME_EXTENTS` | ✅ 100% |
+| **XFCE** | Xfwm4 | CSD / `_GTK_FRAME_EXTENTS` nativos | ✅ 100% |
 | **LXDE** | Openbox | Modo `solid-csd` sin marcos negros | ✅ 100% |
-| **MATE** | Marco | CSD adaptativo con y sin compositor | ✅ 100% |
+| **MATE** | Marco | CSD adaptable con y sin composición | ✅ 100% |
 | **Cinnamon** | Muffin | CSD nativo con aceleración | ✅ 100% |
 | **LXQt** | Openbox / KWin | Integración fluida en Wayland y X11 | ✅ 100% |
 
 ---
 
-## 📦 Instalación
+## 🚀 Guía de Integración Paso a Paso: ¿Cómo hacerlo funcionar en tu App?
 
-Agrega `canaima-titlebar` a tu archivo `src-tauri/Cargo.toml`:
-
-```toml
-[dependencies]
-canaima-titlebar = { path = "ruta/a/lib-rust-titlebar-main" }
-```
-
-O desde Git:
-
-```toml
-[dependencies]
-canaima-titlebar = { git = "https://github.com/SistemaOperativoCanaima/rust-titlebar-canaima.git", branch = "main" }
-```
+Para que tu aplicación de escritorio muestre la ventana personalizada de Canaima **sin que aparezca primero la ventana del sistema operativo**, el desarrollador debe seguir estos pasos en su proyecto Tauri v2:
 
 ---
 
-## 💻 Guía de Integración
+### Paso 1: Configurar `tauri.conf.json` (¡CRUCIAL!)
 
-### 1. Configuración en Tauri (Rust)
+En tu archivo `src-tauri/tauri.conf.json`, define la configuración de la ventana principal:
 
-En tu archivo `src-tauri/src/lib.rs`:
+```json
+{
+  "app": {
+    "windows": [
+      {
+        "title": "Mi Aplicación Canaima",
+        "width": 800,
+        "height": 600,
+        "minWidth": 400,
+        "minHeight": 300,
+        "decorations": true,
+        "transparent": false,
+        "visible": false
+      }
+    ]
+  }
+}
+```
 
-```rust
-use tauri::Manager;
+> [!IMPORTANT]
+> **¿Por qué `"visible": false` es obligatorio?**
+> En GTK 3, la función [`gtk_window_set_titlebar`](https://docs.gtk.org/gtk3/method.Window.set_titlebar.html) (que asocia la `HeaderBar` nativa de Canaima) **únicamente puede ejecutarse sobre una ventana que aún no ha sido mapeada ni mostrada en pantalla**.
+> 
+> - Si configuras `"visible": true`, Tauri forzará al sistema operativo a mostrar la ventana inmediatamente con el marco por defecto del gestor de ventanas (Mutter en GNOME, KWin en KDE, Xfwm4, etc.). Esto causará un parpadeo desagradable de la ventana del SO o provocará que GTK ignore la barra personalizada.
+> - Con `"visible": false`, la ventana se crea en segundo plano; Rust le adjunta la `HeaderBar` de Canaima limpiamente, y la ventana sólo se muestra cuando la interfaz web (Vue / HTML) ha terminado de cargar, logrando una presentación impecable.
+> 
+> **¿Por qué `"decorations": true`?**
+> En GTK, si colocas `"decorations": false`, GTK desactiva completamente el sistema de decoración CSD y ocultará tanto la barra nativa del SO como la propia `HeaderBar`.
 
-#[cfg_attr(mobile, tauri::mobile_entry_point)]
-pub fn run() {
-    tauri::Builder::default()
-        .setup(|app| {
-            #[cfg(target_os = "linux")]
-            {
-                // Obtener la ventana principal e inicializar la HeaderBar Canaima
-                if let Some(window) = app.get_webview_window("main") {
-                    canaima_titlebar::setup_default(&window);
-                }
-            }
-            Ok(())
-        })
-        // Registrar el comando Tauri para sincronización de tema
-        .invoke_handler(tauri::generate_handler![
-            canaima_titlebar::sync_theme
-        ])
-        .run(tauri::generate_context!())
-        .expect("Error al ejecutar la aplicación");
+---
+
+### Paso 2: Otorgar Permisos en `capabilities/default.json`
+
+Para que el frontend de tu aplicación (TypeScript / JavaScript) tenga autorización para mostrar la ventana una vez cargada, verifica que `core:window:allow-show` esté presente en `src-tauri/capabilities/default.json`:
+
+```json
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Permisos de ventana para la plantilla Canaima",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "core:window:allow-show",
+    "core:window:allow-minimize",
+    "core:window:allow-maximize",
+    "core:window:allow-close",
+    "core:window:allow-toggle-maximize",
+    "core:window:allow-start-dragging",
+    "opener:default"
+  ]
 }
 ```
 
 ---
 
-### 2. Configuración Personalizada (`TitlebarConfig`)
+### Paso 3: Agregar Dependencias en `src-tauri/Cargo.toml`
 
-Si deseas cambiar el título, ocultar algún botón o añadir CSS personalizado:
+Agrega `canaima-titlebar` junto a las librerías GTK de Linux:
+
+```toml
+[dependencies]
+tauri = { version = "2" }
+canaima-titlebar = { path = "../../../lib-rust-titlebar-main" }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+gtk = "0.18"
+glib = "0.18"
+gdk-pixbuf = "0.18"
+```
+
+---
+
+### Paso 4: Inicializar la Barra y Registrar Comandos en `src-tauri/src/lib.rs`
+
+En la función de inicialización de Tauri, asocia la barra a la ventana principal dentro de `.setup()` y registra el comando `canaima_titlebar::sync_theme`:
+
+```rust
+// src-tauri/src/lib.rs
+
+#[cfg_attr(mobile, tauri::mobile_entry_point)]
+pub fn run() {
+    tauri::Builder::default()
+        .plugin(tauri_plugin_opener::init())
+        .setup(|app| {
+            #[cfg(target_os = "linux")]
+            {
+                use tauri::Manager;
+                // Obtener la ventana principal antes de mapearla
+                if let Some(window) = app.get_webview_window("main") {
+                    // Inicializar la HeaderBar Canaima con la configuración oficial
+                    canaima_titlebar::setup_default(&window);
+                }
+            }
+            Ok(())
+        })
+        .invoke_handler(tauri::generate_handler![
+            // Registrar comando IPC para cambio dinámico de tema
+            canaima_titlebar::sync_theme,
+        ])
+        .run(tauri::generate_context!())
+        .expect("Ocurrió un error al ejecutar la aplicación Canaima");
+}
+```
+
+---
+
+### Paso 5: Mostrar la Ventana de Forma Segura en el Frontend (`src/main.ts`)
+
+Dado que la ventana se configuró con `"visible": false`, el frontend debe invocar `getCurrentWindow().show()` una vez que el DOM esté listo.
+
+En aplicaciones que usan empaquetadores como **Vite** (`<script type="module">`), los scripts se ejecutan de forma diferida. Para evitar condiciones de carrera donde `DOMContentLoaded` ya se haya emitido antes de registrar el listener, usa el siguiente patrón seguro en `src/main.ts`:
+
+```typescript
+// src/main.ts
+import { getCurrentWindow } from '@tauri-apps/api/window'
+import { createApp } from 'vue'
+import App from './App.vue'
+
+// 1. Mostrar la ventana de forma segura (evita pantalla blanca y ventana del SO)
+const showWindow = () => {
+  getCurrentWindow().show().catch(() => null)
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', showWindow)
+} else {
+  // Si el DOM ya cargó antes de ejecutar el módulo Vite, mostrar de inmediato
+  showWindow()
+}
+
+// 2. Montar tu aplicación Vue / React
+const app = createApp(App)
+app.mount('#app')
+```
+
+---
+
+### Paso 6: Sincronización de Tema Claro / Oscuro desde el Frontend
+
+Cuando el usuario alterne el tema de tu aplicación (por ejemplo, desde un botón en la interfaz o mediante un Store de Pinia), invoca `sync_theme` para sincronizar la HeaderBar nativa:
+
+```typescript
+// src/stores/useAppStore.ts (o en cualquier componente Vue / React)
+import { invoke } from '@tauri-apps/api/core'
+
+export function aplicarTema(esOscuro: boolean) {
+  // 1. Actualizar clases CSS en el DOM web (Tailwind CSS)
+  if (esOscuro) {
+    document.documentElement.classList.add('dark')
+  } else {
+    document.documentElement.classList.remove('dark')
+  }
+
+  // 2. Notificar a la HeaderBar nativa GTK
+  invoke('sync_theme', { isDark: esOscuro }).catch((err) => {
+    console.error('Error al sincronizar tema con canaima-titlebar:', err)
+  })
+}
+```
+
+---
+
+## 🛠️ Opciones Avanzadas: `TitlebarConfig`
+
+Si requieres personalizar el comportamiento (cambiar el título mostrado, ocultar ciertos botones o inyectar estilos CSS adicionales), utiliza `setup_gtk_headerbar` pasando una estructura `TitlebarConfig`:
 
 ```rust
 use canaima_titlebar::{setup_gtk_headerbar, TitlebarConfig};
@@ -111,15 +242,17 @@ use canaima_titlebar::{setup_gtk_headerbar, TitlebarConfig};
 if let Some(window) = app.get_webview_window("main") {
     let config = TitlebarConfig {
         enabled: true,
-        title: Some("Mi Aplicación Canaima".to_string()),
+        // Título explícito (si es None, usa el título de la ventana)
+        title: Some("Centro de Control Canaima".to_string()),
         show_logo: true,           // Mostrar isotipo Tepuy
         show_minimize: true,       // Botón minimizar
-        show_maximize: true,       // Botón maximizar
+        show_maximize: true,       // Botón maximizar / restaurar
         show_close: true,          // Botón cerrar
-        initial_dark_mode: false,  // Iniciar en modo claro
+        initial_dark_mode: false,  // Tema inicial si no hay autodefinición
+        auto_detect_theme: true,   // Consultar el tema GTK del sistema
         custom_css: Some("
             #canaima-headerbar {
-                background-color: #f5f5f5;
+                background-color: #202020;
             }
         ".to_string()),
     };
@@ -130,55 +263,33 @@ if let Some(window) = app.get_webview_window("main") {
 
 ---
 
-### 3. Sincronización desde el Frontend (JavaScript / TypeScript / Vue 3)
+## 🎨 Selectores CSS para Estilos Personalizados
 
-Cuando tu usuario cambie el tema en la aplicación web, invoca `sync_theme` para actualizar instantáneamente la barra nativa GTK:
+Todos los componentes de la barra exponen selectores semánticos que puedes manipular con la opción `custom_css`:
 
-```typescript
-import { invoke } from '@tauri-apps/api/core';
-
-// Alternar entre modo oscuro y claro
-export async function cambiarTema(esOscuro: boolean) {
-  // 1. Actualizar clases en el frontend
-  if (esOscuro) {
-    document.documentElement.classList.add('dark');
-  } else {
-    document.documentElement.classList.remove('dark');
-  }
-
-  // 2. Notificar a la HeaderBar nativa de Canaima
-  await invoke('sync_theme', { isDark: esOscuro });
-}
-```
-
----
-
-## 🛠️ Personalización con CSS
-
-Los elementos de la barra cuentan con identificadores y clases semánticas para facilitar estilos personalizados:
-
-| Selector | Descripción |
-| :--- | :--- |
-| `#canaima-headerbar` | Contenedor principal de la HeaderBar. |
-| `#canaima-headerbar.is-dark` | Estilos aplicados en modo oscuro. |
-| `#canaima-title` | Etiqueta de texto del título centrado. |
-| `#canaima-logo` | Widget de imagen con el logo SVG vectorial de Canaima. |
-| `#canaima-buttons-box` | Contenedor de los botones de ventana. |
-| `.btn-minimize` | Botón circular de minimizar. |
-| `.btn-maximize` | Botón circular de maximizar / restaurar. |
-| `.btn-close` | Botón circular de cerrar (color distintivo `#0B6793`). |
+| Selector | Elemento GTK | Descripción |
+| :--- | :--- | :--- |
+| `#canaima-headerbar` | `GtkHeaderBar` | Contenedor principal de la barra de título. |
+| `#canaima-headerbar.is-dark` | `GtkHeaderBar` | Estilo activo cuando la barra está en modo oscuro. |
+| `#canaima-title` | `GtkLabel` | Etiqueta con el texto del título central. |
+| `#canaima-logo` | `GtkImage` | Imagen que contiene el SVG oficial del Tepuy Canaima. |
+| `#canaima-buttons-box` | `GtkBox` | Contenedor horizontal que agrupa los botones de control. |
+| `.btn-minimize` | `GtkButton` | Botón circular de minimizar ventana. |
+| `.btn-maximize` | `GtkButton` | Botón circular de maximizar / restaurar ventana. |
+| `.btn-close` | `GtkButton` | Botón circular de cerrar ventana (`#0B6793`). |
+| `.solid-csd` | `GtkWindow` | Clase aplicada automáticamente en escritorios X11 sin compositor. |
 
 ---
 
 ## 🧪 Pruebas Unitarias
 
-Para validar la integridad de la librería y de los activos embebidos:
+Para validar la suite de pruebas y la integridad de los activos embebidos:
 
 ```bash
 cargo test
 ```
 
-Para verificar estándares de calidad con Clippy:
+Para verificar cumplimiento estricto con Clippy:
 
 ```bash
 cargo clippy -- -D warnings
@@ -190,11 +301,11 @@ cargo clippy -- -D warnings
 
 Desarrollado con dedicación por el **Equipo de Desarrollo de Canaima GNU/Linux**.
 
-- **Sitio Oficial**: [https://canaima.softwarelibre.gob.ve/](https://canaima.softwarelibre.gob.ve/)
-- **Repositorio**: [GitHub Sistema Operativo Canaima](https://github.com/SistemaOperativoCanaima)
+- **Sitio Web Oficial**: [https://canaima.softwarelibre.gob.ve/](https://canaima.softwarelibre.gob.ve/)
+- **Organización en GitHub**: [Sistema Operativo Canaima](https://github.com/SistemaOperativoCanaima)
 
 ---
 
 ## 📄 Licencia
 
-Este proyecto se distribuye bajo la licencia **GNU General Public License v3.0 (GPL-3.0-only)**. Consulta el archivo `LICENSE` para más detalles.
+Este proyecto se distribuye bajo la licencia **GNU General Public License v3.0 (GPL-3.0-only)**. Consulta el archivo `LICENSE` para más información.
