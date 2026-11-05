@@ -218,8 +218,14 @@ const CANAIMA_LOGO_SVG: &str = r###"<?xml version="1.0" encoding="UTF-8" standal
 </svg>
 "###;
 
-pub const LOGO_WIDTH: i32 = 94;
-pub const LOGO_HEIGHT: i32 = 16;
+pub const LOGO_WIDTH: i32 = 71;
+pub const LOGO_HEIGHT: i32 = 12;
+
+const BYTES_DARK_MIN: &[u8] = include_bytes!("../assets/minimize.png");
+const BYTES_DARK_MAX: &[u8] = include_bytes!("../assets/maximize.png");
+const BYTES_CLOSE: &[u8] = include_bytes!("../assets/close.png");
+const BYTES_LIGHT_MIN: &[u8] = include_bytes!("../assets/minimize-light.png");
+const BYTES_LIGHT_MAX: &[u8] = include_bytes!("../assets/maximize-light.png");
 
 pub const URI_LIGHT_MINIMIZE: &str = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA8AAAAPCAYAAAA71pVKAAAAJ0lEQVR42mNgGAWjYHgCRgYGhv0MDAxsZOj9xcjAwPCfXJuZKHE2AHycAsNvxOlDAAAAAElFTkSuQmCC";
 pub const URI_LIGHT_MAXIMIZE: &str = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAElBMVEUAAAAAAAD///////////////8gZyBHAAAAAXRSTlMAQObYZgAAABpJREFUeNpjFGSAACYGGICKCMJFaMdgxLAdACNFAGFDN1apAAAAAElFTkSuQmCC";
@@ -246,6 +252,8 @@ pub struct TitlebarConfig {
     pub show_close: bool,
     /// Iniciar en modo oscuro (`true`) o claro (`false`).
     pub initial_dark_mode: bool,
+    /// Detección automática del tema del sistema (por defecto `true`).
+    pub auto_detect_theme: bool,
     /// Estilos CSS adicionales o sobreescrituras.
     pub custom_css: Option<String>,
 }
@@ -260,7 +268,97 @@ impl Default for TitlebarConfig {
             show_maximize: true,
             show_close: true,
             initial_dark_mode: false,
+            auto_detect_theme: true,
             custom_css: None,
+        }
+    }
+}
+
+#[cfg(target_os = "linux")]
+fn load_png_pixbuf(bytes: &[u8]) -> Option<gtk::gdk_pixbuf::Pixbuf> {
+    use gtk::gdk_pixbuf::prelude::*;
+    let loader = gtk::gdk_pixbuf::PixbufLoader::with_type("png").ok()?;
+    loader.write(bytes).ok()?;
+    loader.close().ok()?;
+    loader.pixbuf()
+}
+
+#[cfg(target_os = "linux")]
+fn load_logo_pixbuf(is_dark: bool) -> Option<gtk::gdk_pixbuf::Pixbuf> {
+    use gtk::gdk_pixbuf::prelude::*;
+    let svg_data = if is_dark {
+        CANAIMA_LOGO_SVG
+            .replace("#1a1a1a", "#ffffff")
+            .replace("fill:#1a1a1a", "fill:#ffffff")
+    } else {
+        CANAIMA_LOGO_SVG.to_string()
+    };
+    let loader = gtk::gdk_pixbuf::PixbufLoader::with_type("svg").ok()?;
+    loader.write(svg_data.as_bytes()).ok()?;
+    loader.close().ok()?;
+    let pixbuf = loader.pixbuf()?;
+    pixbuf.scale_simple(LOGO_WIDTH, LOGO_HEIGHT, gtk::gdk_pixbuf::InterpType::Bilinear)
+}
+
+#[cfg(target_os = "linux")]
+pub fn detect_system_dark_theme() -> bool {
+    use gtk::prelude::*;
+    if let Some(settings) = gtk::Settings::default() {
+        if settings.is_gtk_application_prefer_dark_theme() {
+            return true;
+        }
+        if let Some(theme_name) = settings.gtk_theme_name() {
+            let lower = theme_name.to_lowercase();
+            if lower.contains("dark") || lower.contains("oscuro") || lower.contains("black") {
+                return true;
+            }
+        }
+    }
+    false
+}
+
+#[cfg(not(target_os = "linux"))]
+pub fn detect_system_dark_theme() -> bool {
+    false
+}
+
+#[cfg(target_os = "linux")]
+fn update_headerbar_widgets<C: gtk::prelude::IsA<gtk::Container>>(container: &C, is_dark: bool) {
+    use gtk::prelude::*;
+    let container_ref: &gtk::Container = container.as_ref();
+    for child in container_ref.children() {
+        match child.widget_name().as_str() {
+            "canaima-logo" => {
+                if let Ok(image) = child.clone().downcast::<gtk::Image>() {
+                    let pix = load_logo_pixbuf(is_dark);
+                    image.set_from_pixbuf(pix.as_ref());
+                }
+            }
+            "canaima-icon-min" => {
+                if let Ok(image) = child.clone().downcast::<gtk::Image>() {
+                    let bytes = if is_dark { BYTES_DARK_MIN } else { BYTES_LIGHT_MIN };
+                    let pix = load_png_pixbuf(bytes);
+                    image.set_from_pixbuf(pix.as_ref());
+                }
+            }
+            "canaima-icon-max" => {
+                if let Ok(image) = child.clone().downcast::<gtk::Image>() {
+                    let bytes = if is_dark { BYTES_DARK_MAX } else { BYTES_LIGHT_MAX };
+                    let pix = load_png_pixbuf(bytes);
+                    image.set_from_pixbuf(pix.as_ref());
+                }
+            }
+            "canaima-icon-close" => {
+                if let Ok(image) = child.clone().downcast::<gtk::Image>() {
+                    let pix = load_png_pixbuf(BYTES_CLOSE);
+                    image.set_from_pixbuf(pix.as_ref());
+                }
+            }
+            _ => {
+                if let Ok(sub) = child.clone().downcast::<gtk::Container>() {
+                    update_headerbar_widgets(&sub, is_dark);
+                }
+            }
         }
     }
 }
@@ -295,35 +393,7 @@ pub mod commands {
                                 context.remove_class("is-dark");
                             }
 
-                            // Actualizar color del logo SVG
-                            for child in hb.children() {
-                                if child.widget_name() == "canaima-logo" {
-                                    if let Ok(image) = child.downcast::<gtk::Image>() {
-                                        let svg_data = if is_dark {
-                                            CANAIMA_LOGO_SVG
-                                                .replace("#1a1a1a", "#ffffff")
-                                                .replace("fill:#1a1a1a", "fill:#ffffff")
-                                        } else {
-                                            CANAIMA_LOGO_SVG.to_string()
-                                        };
-                                        if let Ok(loader) =
-                                            gtk::gdk_pixbuf::PixbufLoader::with_type("svg")
-                                        {
-                                            let _ = loader.write(svg_data.as_bytes());
-                                            let _ = loader.close();
-                                            if let Some(pixbuf) = loader.pixbuf() {
-                                                if let Some(scaled) = pixbuf.scale_simple(
-                                                    LOGO_WIDTH,
-                                                    LOGO_HEIGHT,
-                                                    gtk::gdk_pixbuf::InterpType::Bilinear,
-                                                ) {
-                                                    image.set_from_pixbuf(Some(&scaled));
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
+                            update_headerbar_widgets(&hb, is_dark);
                         }
                     }
                 }
@@ -351,13 +421,19 @@ pub fn setup_gtk_headerbar<R: tauri::Runtime>(window: &tauri::WebviewWindow<R>, 
 
     let _ = window.clone().run_on_main_thread(move || {
         if let Ok(gtk_window) = win.gtk_window() {
+            let is_dark = if cfg.auto_detect_theme {
+                detect_system_dark_theme() || cfg.initial_dark_mode
+            } else {
+                cfg.initial_dark_mode
+            };
+
             // Crear HeaderBar nativa
             let header_bar = gtk::HeaderBar::new();
             header_bar.set_show_close_button(false);
             header_bar.style_context().add_class("custom-headerbar");
             header_bar.set_widget_name("canaima-headerbar");
 
-            if cfg.initial_dark_mode {
+            if is_dark {
                 header_bar.style_context().add_class("is-dark");
             }
 
@@ -374,27 +450,14 @@ pub fn setup_gtk_headerbar<R: tauri::Runtime>(window: &tauri::WebviewWindow<R>, 
 
             // Isotipo / Logo vectorial Canaima (Izquierda)
             if cfg.show_logo {
-                if let Ok(loader) = gtk::gdk_pixbuf::PixbufLoader::with_type("svg") {
-                    let svg_content = if cfg.initial_dark_mode {
-                        CANAIMA_LOGO_SVG
-                            .replace("#1a1a1a", "#ffffff")
-                            .replace("fill:#1a1a1a", "fill:#ffffff")
-                    } else {
-                        CANAIMA_LOGO_SVG.to_string()
-                    };
-                    let _ = loader.write(svg_content.as_bytes());
-                    let _ = loader.close();
-                    if let Some(pixbuf) = loader.pixbuf() {
-                        if let Some(scaled_pixbuf) =
-                            pixbuf.scale_simple(LOGO_WIDTH, LOGO_HEIGHT, gtk::gdk_pixbuf::InterpType::Bilinear)
-                        {
-                            let logo_image = gtk::Image::from_pixbuf(Some(&scaled_pixbuf));
-                            logo_image.set_widget_name("canaima-logo");
-                            logo_image.set_margin_start(8);
-                            header_bar.pack_start(&logo_image);
-                            logo_image.show();
-                        }
-                    }
+                if let Some(scaled_pixbuf) = load_logo_pixbuf(is_dark) {
+                    let logo_image = gtk::Image::from_pixbuf(Some(&scaled_pixbuf));
+                    logo_image.set_widget_name("canaima-logo");
+                    logo_image.set_valign(gtk::Align::Center);
+                    logo_image.set_margin_start(10);
+                    logo_image.set_margin_end(6);
+                    header_bar.pack_start(&logo_image);
+                    logo_image.show();
                 }
             }
 
@@ -402,7 +465,7 @@ pub fn setup_gtk_headerbar<R: tauri::Runtime>(window: &tauri::WebviewWindow<R>, 
             let box_buttons = gtk::Box::new(gtk::Orientation::Horizontal, 6);
             box_buttons.style_context().add_class("control-buttons-box");
             box_buttons.set_widget_name("canaima-buttons-box");
-            box_buttons.set_margin_end(8);
+            box_buttons.set_margin_end(6);
 
             if cfg.show_minimize {
                 let btn_minimize = gtk::Button::new();
@@ -413,6 +476,14 @@ pub fn setup_gtk_headerbar<R: tauri::Runtime>(window: &tauri::WebviewWindow<R>, 
                 btn_minimize.style_context().add_class("btn-minimize");
                 btn_minimize.set_widget_name("canaima-btn-min");
                 btn_minimize.set_tooltip_text(Some("Minimizar"));
+
+                let bytes = if is_dark { BYTES_DARK_MIN } else { BYTES_LIGHT_MIN };
+                if let Some(pix) = load_png_pixbuf(bytes) {
+                    let img = gtk::Image::from_pixbuf(Some(&pix));
+                    img.set_widget_name("canaima-icon-min");
+                    btn_minimize.set_image(Some(&img));
+                    btn_minimize.set_always_show_image(true);
+                }
 
                 let w_min = win.clone();
                 btn_minimize.connect_clicked(move |_| {
@@ -431,6 +502,14 @@ pub fn setup_gtk_headerbar<R: tauri::Runtime>(window: &tauri::WebviewWindow<R>, 
                 btn_maximize.style_context().add_class("btn-maximize");
                 btn_maximize.set_widget_name("canaima-btn-max");
                 btn_maximize.set_tooltip_text(Some("Maximizar"));
+
+                let bytes = if is_dark { BYTES_DARK_MAX } else { BYTES_LIGHT_MAX };
+                if let Some(pix) = load_png_pixbuf(bytes) {
+                    let img = gtk::Image::from_pixbuf(Some(&pix));
+                    img.set_widget_name("canaima-icon-max");
+                    btn_maximize.set_image(Some(&img));
+                    btn_maximize.set_always_show_image(true);
+                }
 
                 let w_max = win.clone();
                 btn_maximize.connect_clicked(move |_| {
@@ -455,6 +534,13 @@ pub fn setup_gtk_headerbar<R: tauri::Runtime>(window: &tauri::WebviewWindow<R>, 
                 btn_close.style_context().add_class("btn-close");
                 btn_close.set_widget_name("canaima-btn-close");
                 btn_close.set_tooltip_text(Some("Cerrar"));
+
+                if let Some(pix) = load_png_pixbuf(BYTES_CLOSE) {
+                    let img = gtk::Image::from_pixbuf(Some(&pix));
+                    img.set_widget_name("canaima-icon-close");
+                    btn_close.set_image(Some(&img));
+                    btn_close.set_always_show_image(true);
+                }
 
                 let w_close = win.clone();
                 btn_close.connect_clicked(move |_| {
@@ -504,51 +590,51 @@ pub fn setup_gtk_headerbar<R: tauri::Runtime>(window: &tauri::WebviewWindow<R>, 
             }
 
             // Estilos CSS compatibles con todos los entornos de escritorio
-            let css_data = format!("
+            let css_data = "
                 /* Entornos compositados (GNOME, Cinnamon, KDE Plasma, XFCE/MATE con compositor) */
-                window.csd decoration {{
+                window.csd decoration {
                     border: 0px solid transparent;
                     outline: 0px solid transparent;
-                    box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.3);
-                }}
+                    box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.35);
+                }
 
                 /* Entornos sin compositor (LXDE, LXQt con Openbox, XFCE/MATE sin composición) */
                 window.solid-csd decoration,
                 window.solid-csd,
                 window:not(.csd) decoration,
-                .solid-csd decoration {{
+                .solid-csd decoration {
                     border: 1px solid #7c7c7c;
                     outline: 0px solid transparent;
                     box-shadow: none;
                     margin: 0;
-                }}
+                }
                 
-                #canaima-headerbar {{
+                #canaima-headerbar {
                     min-height: 38px;
                     background-image: none;
-                    background-color: #ececec;
-                    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-                    padding: 0 12px;
-                }}
-                #canaima-headerbar.is-dark {{
-                    background-color: #1a1a1a;
-                    border-bottom: 1px solid #000000;
-                }}
-                #canaima-title {{
+                    background-color: #f2f2f2;
+                    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+                    padding: 0 8px;
+                }
+                #canaima-headerbar.is-dark {
+                    background-color: #242424;
+                    border-bottom: 1px solid #1a1a1a;
+                }
+                #canaima-title {
                     font-size: 13px;
                     font-weight: 600;
-                    color: #333333;
-                    opacity: 0.9;
+                    color: #2b2b2b;
+                    opacity: 0.95;
                     font-family: system-ui, -apple-system, sans-serif;
-                }}
-                #canaima-headerbar.is-dark #canaima-title {{
+                }
+                #canaima-headerbar.is-dark #canaima-title {
                     color: #ffffff;
-                }}
-                #canaima-buttons-box {{
-                    margin-right: 0px;
-                }}
+                }
+                #canaima-buttons-box {
+                    margin-right: 2px;
+                }
                 #canaima-headerbar button.titlebutton,
-                #canaima-headerbar button.control-btn {{
+                #canaima-headerbar button.control-btn {
                     border-radius: 9999px;
                     min-width: 22px;
                     min-height: 22px;
@@ -556,105 +642,90 @@ pub fn setup_gtk_headerbar<R: tauri::Runtime>(window: &tauri::WebviewWindow<R>, 
                     margin: 0 2px;
                     border: none;
                     background-image: none;
-                    background-position: center;
-                    background-repeat: no-repeat;
                     box-shadow: none;
-                    transition: all 0.2s ease;
-                }}
+                    transition: background-color 0.15s ease;
+                }
 
                 /* Botones Modo Claro */
                 #canaima-headerbar button.titlebutton.minimize,
-                #canaima-headerbar button.control-btn.btn-minimize {{
+                #canaima-headerbar button.control-btn.btn-minimize {
                     background-color: #d6d6d6;
-                    background-image: url('{uri_light_min}');
-                }}
+                }
                 #canaima-headerbar button.titlebutton.minimize:hover,
-                #canaima-headerbar button.control-btn.btn-minimize:hover {{
+                #canaima-headerbar button.control-btn.btn-minimize:hover {
                     background-color: #bfbfbf;
-                }}
+                }
                 #canaima-headerbar button.titlebutton.minimize:backdrop,
-                #canaima-headerbar button.control-btn.btn-minimize:backdrop {{
+                #canaima-headerbar button.control-btn.btn-minimize:backdrop {
                     background-color: #d6d6d6;
-                }}
+                }
 
                 #canaima-headerbar button.titlebutton.maximize,
-                #canaima-headerbar button.control-btn.btn-maximize {{
+                #canaima-headerbar button.control-btn.btn-maximize {
                     background-color: #d6d6d6;
-                    background-image: url('{uri_light_max}');
-                }}
+                }
                 #canaima-headerbar button.titlebutton.maximize:hover,
-                #canaima-headerbar button.control-btn.btn-maximize:hover {{
+                #canaima-headerbar button.control-btn.btn-maximize:hover {
                     background-color: #bfbfbf;
-                }}
+                }
                 #canaima-headerbar button.titlebutton.maximize:backdrop,
-                #canaima-headerbar button.control-btn.btn-maximize:backdrop {{
+                #canaima-headerbar button.control-btn.btn-maximize:backdrop {
                     background-color: #d6d6d6;
-                }}
+                }
 
                 #canaima-headerbar button.titlebutton.close,
-                #canaima-headerbar button.control-btn.btn-close {{
+                #canaima-headerbar button.control-btn.btn-close {
                     background-color: #0B6793;
-                    background-image: url('{uri_light_close}');
-                }}
+                }
                 #canaima-headerbar button.titlebutton.close:hover,
-                #canaima-headerbar button.control-btn.btn-close:hover {{
+                #canaima-headerbar button.control-btn.btn-close:hover {
                     background-color: #0889c7;
-                }}
+                }
                 #canaima-headerbar button.titlebutton.close:backdrop,
-                #canaima-headerbar button.control-btn.btn-close:backdrop {{
+                #canaima-headerbar button.control-btn.btn-close:backdrop {
                     background-color: #0B6793;
-                }}
+                }
 
                 /* Botones Modo Oscuro */
                 #canaima-headerbar.is-dark button.titlebutton.minimize,
-                #canaima-headerbar.is-dark button.control-btn.btn-minimize {{
+                #canaima-headerbar.is-dark button.control-btn.btn-minimize {
                     background-color: #303030;
-                    background-image: url('{uri_dark_min}');
-                }}
+                }
                 #canaima-headerbar.is-dark button.titlebutton.minimize:hover,
-                #canaima-headerbar.is-dark button.control-btn.btn-minimize:hover {{
+                #canaima-headerbar.is-dark button.control-btn.btn-minimize:hover {
                     background-color: #525252;
-                }}
+                }
                 #canaima-headerbar.is-dark button.titlebutton.minimize:backdrop,
-                #canaima-headerbar.is-dark button.control-btn.btn-minimize:backdrop {{
+                #canaima-headerbar.is-dark button.control-btn.btn-minimize:backdrop {
                     background-color: #4c4c4c;
-                }}
+                }
 
                 #canaima-headerbar.is-dark button.titlebutton.maximize,
-                #canaima-headerbar.is-dark button.control-btn.btn-maximize {{
+                #canaima-headerbar.is-dark button.control-btn.btn-maximize {
                     background-color: #303030;
-                    background-image: url('{uri_dark_max}');
-                }}
+                }
                 #canaima-headerbar.is-dark button.titlebutton.maximize:hover,
-                #canaima-headerbar.is-dark button.control-btn.btn-maximize:hover {{
+                #canaima-headerbar.is-dark button.control-btn.btn-maximize:hover {
                     background-color: #525252;
-                }}
+                }
                 #canaima-headerbar.is-dark button.titlebutton.maximize:backdrop,
-                #canaima-headerbar.is-dark button.control-btn.btn-maximize:backdrop {{
+                #canaima-headerbar.is-dark button.control-btn.btn-maximize:backdrop {
                     background-color: #4c4c4c;
-                }}
+                }
 
                 #canaima-headerbar.is-dark button.titlebutton.close,
-                #canaima-headerbar.is-dark button.control-btn.btn-close {{
+                #canaima-headerbar.is-dark button.control-btn.btn-close {
                     background-color: #0B6793;
-                    background-image: url('{uri_dark_close}');
-                }}
+                }
                 #canaima-headerbar.is-dark button.titlebutton.close:hover,
-                #canaima-headerbar.is-dark button.control-btn.btn-close:hover {{
+                #canaima-headerbar.is-dark button.control-btn.btn-close:hover {
                     background-color: #0889c7;
-                }}
+                }
                 #canaima-headerbar.is-dark button.titlebutton.close:backdrop,
-                #canaima-headerbar.is-dark button.control-btn.btn-close:backdrop {{
+                #canaima-headerbar.is-dark button.control-btn.btn-close:backdrop {
                     background-color: #0B6793;
-                }}
-            ",
-                uri_light_min = URI_LIGHT_MINIMIZE,
-                uri_light_max = URI_LIGHT_MAXIMIZE,
-                uri_light_close = URI_LIGHT_CLOSE,
-                uri_dark_min = URI_DARK_MINIMIZE,
-                uri_dark_max = URI_DARK_MAXIMIZE,
-                uri_dark_close = URI_DARK_CLOSE,
-            );
+                }
+            ";
 
             static INIT_GLOBAL_CSS: std::sync::Once = std::sync::Once::new();
             INIT_GLOBAL_CSS.call_once(|| {
@@ -700,6 +771,7 @@ mod tests {
         assert!(config.show_maximize);
         assert!(config.show_close);
         assert!(!config.initial_dark_mode);
+        assert!(config.auto_detect_theme);
         assert!(config.title.is_none());
         assert!(config.custom_css.is_none());
     }
@@ -707,13 +779,12 @@ mod tests {
     #[test]
     fn test_embedded_assets_validity() {
         assert!(CANAIMA_LOGO_SVG.contains("<svg"));
-        assert!(URI_LIGHT_MINIMIZE.starts_with("data:image/png;base64,"));
-        assert!(URI_LIGHT_MAXIMIZE.starts_with("data:image/png;base64,"));
-        assert!(URI_LIGHT_CLOSE.starts_with("data:image/png;base64,"));
-        assert!(URI_DARK_MINIMIZE.starts_with("data:image/png;base64,"));
-        assert!(URI_DARK_MAXIMIZE.starts_with("data:image/png;base64,"));
-        assert!(URI_DARK_CLOSE.starts_with("data:image/png;base64,"));
+        assert!(!BYTES_DARK_MIN.is_empty());
+        assert!(!BYTES_DARK_MAX.is_empty());
+        assert!(!BYTES_CLOSE.is_empty());
+        assert!(!BYTES_LIGHT_MIN.is_empty());
+        assert!(!BYTES_LIGHT_MAX.is_empty());
+        assert_eq!(LOGO_WIDTH, 71);
+        assert_eq!(LOGO_HEIGHT, 12);
     }
 }
-
-
