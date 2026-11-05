@@ -2,9 +2,10 @@
 name = "canaima-titlebar"
 version = "0.1.0"
 edition = "2021"
-authors = ["Canaima GNU/Linux Team"]
+authors = ["Canaima Sistema Operativo <proyecto.canaima@cnti.gob.ve>"]
 description = "Barra de título GTK HeaderBar nativa personalizada para aplicaciones Canaima GNU/Linux"
 license = "GPL-3.0-only"
+repository = "https://github.com/SistemaOperativoCanaima/rust-titlebar-canaima"
 
 [dependencies]
 tauri = { version = "2", default-features = false }
@@ -13,4 +14,3 @@ tauri = { version = "2", default-features = false }
 gtk = "0.18"
 glib = "0.18"
 gdk-pixbuf = "0.18"
-
